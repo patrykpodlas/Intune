@@ -2,7 +2,7 @@ Function Get-EndpointSecurityTemplates {
     [CmdletBinding()]
     param (
         $URI = "https://graph.microsoft.com/beta/deviceManagement/templates?`$filter=(isof(%27microsoft.graph.securityBaselineTemplate%27))",
-        $ExportPath = "$env:TEMP\deviceManagement\endpointSecurityTemplates"
+        $ExportPath = "$env:TEMP\deviceManagement\endpointSecurity\templates"
     )
 
     $exportPath = $exportPath.replace('"', '')
