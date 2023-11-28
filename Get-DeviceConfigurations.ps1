@@ -16,7 +16,7 @@ Function Get-DeviceConfigurations {
             Format-HashtableRecursively -Hashtable $item
         }
 
-        # Initialize the array to hold data for export
+        # Initialize the array
         $dataArray = @()
 
         # Process
