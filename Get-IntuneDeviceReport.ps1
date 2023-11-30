@@ -18,7 +18,7 @@ Get the compliance policies applied to the device.
 Get the endpoint security configurations applied to the device.
 
 .EXAMPLE
-Get-IntuneDeviceReport -SecurityIntents -Configuration -Compliance -DeviceID 0fb6bcde-b0d9-4d4a-8bff-d8416e43a46a
+Get-IntuneDeviceReport -SecurityIntents -Configuration -Compliance -DeviceID <deviceId>
 
 .NOTES
 Requires Get-MgGraphAllPages custom function to work with Security Intents.
@@ -119,8 +119,10 @@ function Get-IntuneDeviceReport {
     )
 
     if ($Configuration) {
+        Write-Host ""
+        Write-Host "--- Device configuration state" -ForegroundColor Yellow
         # Get device configuration state
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates" -Method GET | Select-Object -ExpandProperty Value
+        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
         $objects = foreach ($item in $response) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
@@ -132,8 +134,10 @@ function Get-IntuneDeviceReport {
 
 
     if ($Compliance) {
+        Write-Host ""
+        Write-Host "--- Device compliance policy state" -ForegroundColor Yellow
         # Get device compliance policy state
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates" -Method GET | Select-Object -ExpandProperty Value
+        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
         $objects = foreach ($item in $response) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
@@ -144,7 +148,9 @@ function Get-IntuneDeviceReport {
     }
 
     if ($SecurityIntents) {
-        $intents = (Get-EndpointSecurityIntents).Content | ConvertFrom-Json | Select-Object displayName, id
+        Write-Host ""
+        Write-Host "--- Device security intents state" -ForegroundColor Yellow
+        $intents = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/intents?`$select=id,displayName" | Select-Object -ExpandProperty Value
 
         $allResponses = @()
         foreach ($item in $intents) {
