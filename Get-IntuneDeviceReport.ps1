@@ -118,38 +118,38 @@ function Get-IntuneDeviceReport {
         [switch]$SecurityIntents
     )
 
+    $results = @()
+
     if ($Configuration) {
-        Write-Host ""
-        Write-Host "--- Device configuration state" -ForegroundColor Yellow
         # Get device configuration state
         $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
-        $objects = foreach ($item in $response) {
+        $objects = foreach ($item in $response | Where-Object userPrincipalName -ne "System account") {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
         }
 
-        $objects | Select-Object displayName, id, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType | Format-Table
+        $objects | Add-Member -NotePropertyName "type" -NotePropertyValue "configurationProfile" -Force
+
+        $results += $objects | Select-Object displayName, id, type, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType
 
     }
 
 
     if ($Compliance) {
-        Write-Host ""
-        Write-Host "--- Device compliance policy state" -ForegroundColor Yellow
         # Get device compliance policy state
         $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
-        $objects = foreach ($item in $response) {
+        $objects = foreach ($item in $response | Where-Object userPrincipalName -ne "System account") {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
         }
 
-        $objects | Select-Object displayName, id, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType | Format-Table
+        $objects | Add-Member -NotePropertyName "type" -NotePropertyValue "compliancePolicy" -Force
+
+        $results += $objects | Select-Object displayName, id, type, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType
 
     }
 
     if ($SecurityIntents) {
-        Write-Host ""
-        Write-Host "--- Device security intents state" -ForegroundColor Yellow
         $intents = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/intents?`$select=id,displayName" | Select-Object -ExpandProperty Value
 
         $allResponses = @()
@@ -157,26 +157,43 @@ function Get-IntuneDeviceReport {
             $intentDisplayName = $item.displayName
             $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/intents/$($item.id)/deviceStates?`$filter=deviceId eq '$deviceID'" -Method GET | Get-MgGraphAllPages
 
+            <#
+            # The reponse properties are
+            deviceDisplayName
+            userPrincipalName
+            state
+            id - this only refers to the "ID" in the documentation, so no idea what the entire string represents, but the [1] seems to represent the actual intentId#
+            userName
+            lastReportedDateTime
+            deviceId
+            #>
+
             # Add the intentDisplayName to each response item
-            foreach ($respItem in $response) {
-                $respItem | Add-Member -NotePropertyName "intentDisplayName" -NotePropertyValue $intentDisplayName -Force
+            foreach ($item in $response) {
+                $item | Add-Member -NotePropertyName "intentDisplayName" -NotePropertyValue $intentDisplayName -Force
+                $item | Add-Member -NotePropertyName "type" -NotePropertyValue "securityIntent" -Force
             }
 
-            $allResponses += $response
+            $allResponses += $($response | Where-Object userPrincipalName -ne "System account")
         }
 
         # Get device intents state
         $objects = foreach ($item in $allResponses) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]@{
-                IntentName  = $item.intentDisplayName
-                IntentId    = $item.id.split("_")[1]
-                DeviceState = $item.state
+                displayName = $item.intentDisplayName
+                Id          = $item.id.split("_")[1]
+                type        = $item.type
+                state       = $item.state
                 # Add other relevant properties here
             }
         }
 
-        $objects | Sort-Object -Property platformType | Format-Table
+        $results += $objects | Sort-Object -Property platformType
 
     }
+
+    Write-Host "--- Report for deviceId: $DeviceID" -ForegroundColor Yellow
+    return $results
+
 }
