@@ -209,7 +209,6 @@ function Get-IntuneDeviceReport {
                 id          = $item.id.split("_")[1]
                 type        = $item.type
                 state       = $item.state
-                # Add other relevant properties here
             }
         }
 
