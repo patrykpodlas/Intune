@@ -18,7 +18,30 @@ Get the compliance policies applied to the device.
 Get the endpoint security configurations applied to the device.
 
 .EXAMPLE
-Get-IntuneDeviceReport -SecurityIntents -Configuration -Compliance -DeviceID <deviceId>
+Get-IntuneDeviceReport -analyseConflicts -SecurityIntents -Configuration -Compliance -DeviceID "<deviceId" | Format-Table
+
+--- Global conflict report:
+
+--- Conflict ID: <id>
+  --- Conflicting setting: Windows10GeneralConfiguration.DefenderScanArchiveFiles
+      --- From configuration(s):
+          --- NA Security Baseline | ID: <id>
+
+--- Conflict ID: <id>_<id>
+  --- Conflicting setting: Windows10CustomConfiguration
+      --- From configuration(s):
+          --- NA Set Timezone | ID: <id>
+          --- EU Set Timezone | ID: <id>
+
+
+--- Report for device: <deviceId>
+
+displayName                                     state     platformType      id                                   type                 conflictingSetting
+-----------                                     -----     ------------      --                                   ----                 ------------------
+EU Disable Internet Explorer                    compliant windows10AndLater xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx configurationProfile
+EU Compliance Policy                            compliant windows10AndLater xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx compliancePolicy
+EU Antivirus Policy                             unknown                     xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx securityIntent
+EU Account Protection                           compliant                   xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx securityIntent
 
 .NOTES
 Requires Get-MgGraphAllPages custom function to work with Security Intents.
@@ -115,7 +138,8 @@ function Get-IntuneDeviceReport {
         [string]$DeviceID,
         [switch]$Configuration,
         [switch]$Compliance,
-        [switch]$SecurityIntents
+        [switch]$SecurityIntents,
+        [switch]$analyseConflicts
     )
 
     $results = @()
@@ -123,14 +147,14 @@ function Get-IntuneDeviceReport {
     if ($Configuration) {
         # Get device configuration state
         $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
-        $objects = foreach ($item in $response | Where-Object userPrincipalName -ne "System account") {
+        $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
         }
 
         $objects | Add-Member -NotePropertyName "type" -NotePropertyValue "configurationProfile" -Force
 
-        $results += $objects | Select-Object displayName, id, type, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType
+        $results += $objects | Select-Object displayName, state, platformType, id, type
 
     }
 
@@ -138,14 +162,14 @@ function Get-IntuneDeviceReport {
     if ($Compliance) {
         # Get device compliance policy state
         $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
-        $objects = foreach ($item in $response | Where-Object userPrincipalName -ne "System account") {
+        $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
         }
 
         $objects | Add-Member -NotePropertyName "type" -NotePropertyValue "compliancePolicy" -Force
 
-        $results += $objects | Select-Object displayName, id, type, platformType, state, version, settingCount, userPrincipalName, userId | Sort-Object -Property platformType
+        $results += $objects | Select-Object displayName, state, platformType, id, type
 
     }
 
@@ -174,7 +198,7 @@ function Get-IntuneDeviceReport {
                 $item | Add-Member -NotePropertyName "type" -NotePropertyValue "securityIntent" -Force
             }
 
-            $allResponses += $($response | Where-Object userPrincipalName -ne "System account")
+            $allResponses += $($response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" } )
         }
 
         # Get device intents state
@@ -182,18 +206,97 @@ function Get-IntuneDeviceReport {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]@{
                 displayName = $item.intentDisplayName
-                Id          = $item.id.split("_")[1]
+                id          = $item.id.split("_")[1]
                 type        = $item.type
                 state       = $item.state
                 # Add other relevant properties here
             }
         }
 
-        $results += $objects | Sort-Object -Property platformType
+        $results += $objects | Select-Object displayName, state, platformType, id, type
+    }
+
+    if ($analyseConflicts) {
+        function Get-IntuneConflicts {
+            [CmdletBinding()]
+            param (
+
+            )
+            $conflicts = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/deviceConfigurationConflictSummary" -Method GET).Value
+
+            $configurationProfiles = @()
+            $compliancePolicies = @()
+            $securityIntents = @()
+
+            $conflicts | ForEach-Object {
+                Write-Host "--- Conflict ID: $($_.id)" -ForegroundColor Yellow
+                Write-Host "  --- Conflicting setting: " -ForegroundColor Yellow -NoNewline ; Write-Host "$($_.contributingSettings)" -ForegroundColor Red
+                Write-Host "      --- From configuration(s): " -ForegroundColor Yellow
+                if ($_.contributingSettings -like "*Windows10CustomConfiguration*") {
+                    foreach ($item in $($_.conflictingDeviceConfigurations)) {
+                        $displayName = $($item.displayName)
+                        $id = $item.id
+                        Write-Host "          --- $displayName | ID: $id"
+                        $object = [PSCustomObject]@{
+                            displayName        = $displayName
+                            id                 = $id
+                            type               = "configurationProfile"
+                            conflictingSetting = $($_.contributingSettings)
+                        }
+                        $configurationProfiles += $object
+                    }
+                } elseif ($_.contributingSettings -like "*Windows10EndpointProtectionConfiguration*" -or $_.contributingSettings -like "*Windows10GeneralConfiguration*") {
+                    foreach ($item in $($_.conflictingDeviceConfigurations)) {
+                        $displayName = $item.displayName.Substring(0, $($item.displayName.LastIndexOf(" - "))).Trim()
+                        $id = $item.displayName.Substring($($item.displayName.LastIndexOf(" - "))).split("_")[0].TrimStart("-  ")
+                        Write-Host "          --- $displayName | ID: $id"
+                        $object = [PSCustomObject]@{
+                            displayName        = $displayName
+                            id                 = $id
+                            type               = "securityIntent"
+                            conflictingSetting = $($_.contributingSettings)
+                        }
+                        $securityIntents += $object
+                    }
+                } else {
+                    foreach ($item in $($_.conflictingDeviceConfigurations)) {
+                        $displayName = $($item.displayName)
+                        $id = $item.id
+                        Write-Host "          --- $displayName | ID: $id"
+                        $object = [PSCustomObject]@{
+                            displayName        = $displayName
+                            id                 = $id
+                            type               = "unknown"
+                            conflictingSetting = $($_.contributingSettings)
+                        }
+                        $compliancePolicies += $object
+                    }
+                }
+                Write-Host ""
+            }
+
+            $everything = $configurationProfiles + $compliancePolicies + $securityIntents
+            return $everything
+
+        }
+
+        Write-Host ""
+        Write-Host "--- Global conflict report:" -ForegroundColor Yellow
+        Write-Host ""
+        $conflicts = Get-IntuneConflicts
+
+        # Compare results to the conflicts to highlight what's important for the device targeted
+        foreach ($item in $results | Where-Object state -eq "conflict") {
+            $conflictId = $($($conflicts | Where-Object { $_.id -eq $item.id }).id)
+            $conflictSetting = $conflicts | Where-Object { $_.id -eq $conflictId } | Select-Object -ExpandProperty conflictingSetting
+            Write-Host "Found conflict: $($item.displayName) with ID: $conflictId for $conflictSetting"
+            $item | Add-Member -NotePropertyName "conflictingSetting" -NotePropertyValue $conflictSetting -Force
+        }
 
     }
 
-    Write-Host "--- Report for deviceId: $DeviceID" -ForegroundColor Yellow
-    return $results
+    Write-Host ""
+    Write-Host "--- Report for device: $deviceId" -ForegroundColor Yellow
+    return $results | Select-Object displayName, state, platformType, id, type, conflictingSetting
 
 }
