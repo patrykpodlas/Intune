@@ -146,7 +146,9 @@ function Get-IntuneDeviceReport {
 
     if ($Configuration) {
         # Get device configuration state
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
+        # For whatever reason, this API return ALL the devices that belong to the user, not just the device targeted, but you can filter through when running the command function.
+        # https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-deviceconfigurationsettingstate?view=graph-rest-beta
+        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates" -Method GET | Select-Object -ExpandProperty Value
         $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
@@ -161,7 +163,9 @@ function Get-IntuneDeviceReport {
 
     if ($Compliance) {
         # Get device compliance policy state
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates?`$filter=platformType eq 'windows10AndLater'" -Method GET | Select-Object -ExpandProperty Value
+        # For whatever reason, this API return ALL the devices that belong to the user, not just the device targeted, but you can filter through when running the command function.
+        # https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-devicecompliancepolicysettingstate?view=graph-rest-beta
+        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates" -Method GET | Select-Object -ExpandProperty Value
         $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
