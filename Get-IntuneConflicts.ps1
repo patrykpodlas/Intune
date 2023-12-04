@@ -60,6 +60,3 @@ function Get-IntuneConflicts {
     Write-Output $everything | Select-Object displayName, ID, type, conflictingSetting
 
 }
-
-$conflicts = Get-IntuneConflicts
-Write-Output $conflicts
