@@ -292,7 +292,9 @@ function Get-IntuneDeviceReport {
         foreach ($item in $results | Where-Object state -eq "conflict") {
             $conflictId = $($($conflicts | Where-Object { $_.id -eq $item.id }).id)
             $conflictSetting = $conflicts | Where-Object { $_.id -eq $conflictId } | Select-Object -ExpandProperty conflictingSetting
+            Write-Host ""
             Write-Host "Found conflict: $($item.displayName) with ID: $conflictId for $conflictSetting"
+            Write-Host ""
             $item | Add-Member -NotePropertyName "conflictingSetting" -NotePropertyValue $conflictSetting -Force
         }
 
