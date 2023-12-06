@@ -1,8 +1,8 @@
-Function Get-DevicePowerShellScripts {
+Function Get-DeviceShellScripts {
     [CmdletBinding()]
     param (
-        $URI = "https://graph.microsoft.com/beta/deviceManagement/deviceManagementScripts",
-        $ExportPath = "$env:TEMP\deviceManagement\devicePowerShellScripts"
+        $URI = "https://graph.microsoft.com/beta/deviceManagement/deviceShellScripts?`$expand=assignments",
+        $ExportPath = "$env:TEMP\deviceManagement\deviceShellScripts"
     )
 
     $exportPath = $exportPath.replace('"', '')
@@ -11,21 +11,13 @@ Function Get-DevicePowerShellScripts {
         # Get
         $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
-        # Get assignments
-        foreach ($item in $request) {
-            $assignmentsUri = "$URI('$($item.id)')/assignments"
-            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
-            $item.assignments = $itemAssignments
-        }
-
         # Get script content
         foreach ($item in $request) {
-            $scriptContentUri = "$URI/$($item.id)?`$select=scriptContent"
+            $scriptContentUri = "https://graph.microsoft.com/beta/deviceManagement/deviceShellScripts/$($item.id)?`$select=scriptContent"
             $itemScriptContent = (Invoke-MgGraphRequest -Uri $scriptContentUri -Method GET).scriptContent
             #[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$itemScriptContent")) | Out-File -FilePath ".\$($item.fileName).txt" -Encoding utf8
             $item.scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$itemScriptContent"))
         }
-
 
         # Sort
         $sortedRequest = foreach ($item in $request) {
