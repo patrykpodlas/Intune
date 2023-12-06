@@ -135,10 +135,15 @@ function Get-MgGraphAllPages {
 function Get-IntuneDeviceReport {
     [CmdletBinding()]
     param (
+        [Parameter(ParameterSetName="Default", Mandatory)]
         [string]$DeviceID,
+        [Parameter(ParameterSetName="Default")]
         [switch]$Configuration,
+        [Parameter(ParameterSetName="Default")]
         [switch]$Compliance,
+        [Parameter(ParameterSetName="Default")]
         [switch]$SecurityIntents,
+        [Parameter(ParameterSetName="Default")]
         [switch]$analyseConflicts
     )
 
