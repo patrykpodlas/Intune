@@ -1,8 +1,8 @@
-Function Get-DeviceManagementScripts {
+Function Get-DevicePowerShellScripts {
     [CmdletBinding()]
     param (
         $URI = "https://graph.microsoft.com/beta/deviceManagement/deviceManagementScripts",
-        $ExportPath = "$env:TEMP\deviceManagement\deviceManagementScripts"
+        $ExportPath = "$env:TEMP\deviceManagement\devicePowerShellScripts"
     )
 
     $exportPath = $exportPath.replace('"', '')
@@ -17,6 +17,14 @@ Function Get-DeviceManagementScripts {
             $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
             $item.assignments = $itemAssignments
         }
+
+        # Get script content
+        foreach ($item in $request) {
+            $scriptContentUri = "$URI/$($item.id)?`$select=scriptContent"
+            $itemScriptContent = (Invoke-MgGraphRequest -Uri $scriptContentUri -Method GET).scriptContent
+            $item.scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$itemScriptContent"))
+        }
+
 
         # Sort
         $sortedRequest = foreach ($item in $request) {
