@@ -26,7 +26,6 @@ Function Get-DevicePowerShellScripts {
             $item.scriptContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$itemScriptContent"))
         }
 
-
         # Sort
         $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
