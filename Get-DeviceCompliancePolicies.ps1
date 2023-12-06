@@ -11,6 +11,13 @@ Function Get-DeviceCompliancePolicies {
         # Get
         $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
+        # Get assignments
+        foreach ($item in $request) {
+            $assignmentsUri = "$URI('$($item.id)')/assignments"
+            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
+            $item.assignments = $itemAssignments
+        }
+
         # Sort
         $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
