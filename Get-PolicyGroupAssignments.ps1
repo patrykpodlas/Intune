@@ -17,29 +17,31 @@ function Get-PolicyGroupAssignments {
         $policyID = ($item.Content | ConvertFrom-Json | Select-Object -ExpandProperty Id)
         # Try-catch block necessary because of Get-MgGraphAllPages set on some of the API calls where it adds "Value" which isn't present for API calls that don't need it.
         try {
-            $groupIDs = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty Value | Select-Object -ExpandProperty target | Select-Object -ExpandProperty groupId
+            $groups = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty Value | Select-Object -ExpandProperty target | Select-Object -Property "@odata.type", groupId
         } catch {
-            $groupIDs = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty target | Select-Object -ExpandProperty groupId
+            $groups = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty target | Select-Object -Property "@odata.type", groupId
         }
 
-        if ($groupIDs) {
-            $groups = @()
-            foreach ($item in $groupIDs) {
-                $groupID = $item
-                $groupDisplayName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$item" -Method GET | Select-Object -ExpandProperty displayName
+        if ($groups) {
+            $groupsObject = @()
+            foreach ($item in $groups) {
+                $groupID = $($item.groupID)
+                $groupTargetType = $($item."@odata.type")
+                $groupDisplayName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$groupID" -Method GET | Select-Object -ExpandProperty displayName
 
                 $object = [PSCustomObject]@{
                     groupID          = $groupID
                     groupDisplayName = $groupDisplayName
+                    groupTargetType  = $groupTargetType
                 }
 
-                $groups += $object
+                $groupsObject += $object
             }
 
             $object = [PSCustomObject]@{
                 policyName = $policyName
                 policyID   = $policyID
-                groups     = $groups
+                groups     = $groupsObject
             }
 
             $table += $object
