@@ -132,6 +132,114 @@ function Get-MgGraphAllPages {
     end {}
 }
 
+# This is the new API as outlined in: https://techcommunity.microsoft.com/t5/intune-customer-success/endpoint-security-policies-migrating-to-the-unified-settings/ba-p/3890989
+# https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfigv2-devicemanagementconfigurationpolicy?view=graph-rest-beta
+
+Function Get-DeviceConfigurationPolicies {
+    [CmdletBinding()]
+    param (
+        $URI = "https://graph.microsoft.com/beta/deviceManagement/configurationPolicies",
+        $ExportPath = "$env:TEMP\deviceManagement\deviceConfigurationPolicies"
+    )
+
+    $exportPath = $exportPath.replace('"', '')
+
+    try {
+        # Get
+        $request = (Invoke-MgGraphRequest -Uri $URI -Method GET | Get-MgGraphAllPages)
+
+        # Get assignments
+        foreach ($item in $request) {
+            $assignmentsUri = "$URI('$($item.id)')/assignments"
+            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET)
+            $item.assignments = $itemAssignments
+        }
+
+        # Sort
+        $sortedRequest = foreach ($item in $request) {
+            Format-HashtableRecursively -Hashtable $item
+        }
+
+        # Initialize the array to hold data for export
+        $dataArray = @()
+
+        # Process
+        foreach ($item in $sortedRequest) {
+            Write-Verbose "Item: $($item.name)"
+            $jsonContent = $item | ConvertTo-Json -Depth 99
+            $fileName = $item.name -replace '[\<\>\:"/\\\|\?\*]', "_"
+
+            $fileData = @{
+                FileName   = "$fileName.json"
+                Content    = $jsonContent
+                ExportPath = $exportPath
+            }
+            # Add the object to the array
+            $dataArray += $fileData
+        }
+
+        return $dataArray
+
+    } catch {
+        Write-Error "An error occurred: $($_.Exception.Message)"
+        return
+    }
+}
+
+# The below script retrieves the group names and IDs for the assignments inside another policy (Get-DeviceConfigurationPolicies, Get-DeviceCompliancePolicies, Get-EndpointSecurityIntents), this then creates a table showing the policy and it's assignments including the ID and displayName
+# Error action preference is mandatory because the -ErrorAction does not work (haven't troubleshooted yet)
+# Simply pass the entire output of the cmdlet that supports retrieval of assignments to this one
+# Example:
+# 1. $securityIntents = Get-EndpointSecurityIntents
+# 2. Get-PolicyGroupAssignments -Policies $securityIntents
+
+$ErrorActionPreference = 'Stop'
+function Get-PolicyGroupAssignments {
+    param (
+        $Policies
+    )
+    $table = @()
+    foreach ($item in $Policies) {
+        # include check to make sure that if the policy doesn't have an assignment, then skip it
+        $policyName = ($item.FileName).trim(".json")
+        $policyID = ($item.Content | ConvertFrom-Json | Select-Object -ExpandProperty Id)
+        # Try-catch block necessary because of Get-MgGraphAllPages set on some of the API calls where it adds "Value" which isn't present for API calls that don't need it.
+        try {
+            $groups = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty Value | Select-Object -ExpandProperty target | Select-Object -Property "@odata.type", groupId
+        } catch {
+            $groups = $item.content | ConvertFrom-Json | Select-Object -ExpandProperty assignments | Select-Object -ExpandProperty target | Select-Object -Property "@odata.type", groupId
+        }
+
+        if ($groups) {
+            $groupsObject = @()
+            foreach ($item in $groups) {
+                $groupID = $($item.groupID)
+                $groupTargetType = $($item."@odata.type")
+                $groupDisplayName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$groupID" -Method GET | Select-Object -ExpandProperty displayName
+
+                $object = [PSCustomObject]@{
+                    groupID          = $groupID
+                    groupDisplayName = $groupDisplayName
+                    groupTargetType  = $groupTargetType
+                }
+
+                $groupsObject += $object
+            }
+
+            $object = [PSCustomObject]@{
+                policyName = $policyName
+                policyID   = $policyID
+                groups     = $groupsObject
+            }
+
+            $table += $object
+        }
+    }
+
+    return $table
+
+}
+
 function Get-IntuneDeviceReport {
     [CmdletBinding()]
     param (
