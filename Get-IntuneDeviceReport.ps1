@@ -135,15 +135,17 @@ function Get-MgGraphAllPages {
 function Get-IntuneDeviceReport {
     [CmdletBinding()]
     param (
-        [Parameter(ParameterSetName="Default", Mandatory)]
+        [Parameter(ParameterSetName = "Default", Mandatory)]
         [string]$DeviceID,
-        [Parameter(ParameterSetName="Default")]
+        [Parameter(ParameterSetName = "Default")]
         [switch]$Configuration,
-        [Parameter(ParameterSetName="Default")]
+        [Parameter(ParameterSetName = "Default")]
         [switch]$Compliance,
-        [Parameter(ParameterSetName="Default")]
+        [Parameter(ParameterSetName = "Default")]
         [switch]$SecurityIntents,
-        [Parameter(ParameterSetName="Default")]
+        [Parameter(ParameterSetName = "Default")]
+        [switch]$NewPolicies,
+        [Parameter(ParameterSetName = "Default")]
         [switch]$analyseConflicts
     )
 
@@ -180,6 +182,43 @@ function Get-IntuneDeviceReport {
 
         $results += $objects | Select-Object displayName, state, platformType, id, type
 
+    }
+
+    if ($NewPolicies) {
+        #$newPolicies[34].content
+        $policies = Get-DeviceConfigurationPolicies
+        $policyGroupAssignments = Get-PolicyGroupAssignments -Policies $policies
+        # Show what groups the device is a member of
+        $intuneDeviceGroupMemberships = Get-IntuneDeviceGroupMemberships -DeviceID $DeviceID
+        $deviceGroupIDs = $intuneDeviceGroupMemberships.id
+        foreach ($item in $policyGroupAssignments) {
+
+            $policyname = $item.policyName
+            $groups = $item.groups
+            $policyID = $item.policyID
+
+            foreach ($item in $groups) {
+                $matchFound = $deviceGroupIDs | Where-Object { $item.groupID -like "$_" }
+                if ($matchFound) {
+                    $groupTargetType = $item.groupTargetType
+                    if ($groupTargetType -eq "#microsoft.graph.groupAssignmentTarget") {
+                        $groupTargetType = "assigned"
+                    } elseif ($groupTargetType -eq "#microsoft.graph.exclusionGroupAssignmentTarget") {
+                        $groupTargetType = "excluded"
+                    }
+                    $object = [PSCustomObject]@{
+                        displayName        = $policyname
+                        state              = "uknown"
+                        platformType       = "unknown"
+                        id                 = $policyID
+                        type               = "newAPI"
+                        conflictingSetting = ""
+                        groupTargetType    = $groupTargetType
+                    }
+                    $results += $object
+                }
+            }
+        }
     }
 
     if ($SecurityIntents) {
@@ -307,6 +346,21 @@ function Get-IntuneDeviceReport {
 
     Write-Host ""
     Write-Host "--- Report for device: $deviceId" -ForegroundColor Yellow
-    return $results | Select-Object displayName, state, platformType, id, type, conflictingSetting
+    return $results | Select-Object displayName, state, platformType, id, type, conflictingSetting, groupTargetType
 
+}
+
+function Get-IntuneDeviceGroupMemberships {
+    param (
+        $DeviceID
+    )
+    # This is the Intune Device ID, but we can't use it because we need the Object ID of the device, which we can't get because none of the Intune API's get the ID.
+    # Get the device displayName from the Intune Device ID
+    $deviceName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$($deviceId)?`$select=deviceName" | Select-Object -ExpandProperty deviceName
+    # Get the Intune ObjectID from the device displayName
+    $azureADdeviceID = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$($deviceName)'" | Select-Object -ExpandProperty Value | Select-Object -ExpandProperty Id
+    # Requires ObjectID (this is the Azure AD ID)
+    $request = Invoke-MgGraphRequest -URI "https://graph.microsoft.com/v1.0/devices/$azureADdeviceID/memberOf" | Select-Object -ExpandProperty Value | Select-Object id, displayName
+    # The reutned request contains all the groups the device is a member of.
+    return $request
 }
