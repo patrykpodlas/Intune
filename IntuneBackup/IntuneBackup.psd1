@@ -69,14 +69,15 @@ Copyright = '(c) 2023 patryk.podlas. All rights reserved.'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-AppleVPPTokens', 'Get-AppManagementRoleAssignment', 
-               'Get-ConfigurationPolicies', 'Get-DeviceCompliancePolicies', 
-               'Get-DeviceConfigurations', 'Get-DevicePowerShellScripts', 
-               'Get-DeviceShellScripts', 'Get-EndpointSecurityIntents', 
-               'Get-EndpointSecurityTemplates', 'Get-ManagedAppConfigurations', 
-               'Get-ManagedAppProtectionPolicies', 
-               'Get-ManagedDeviceConfigurationPolicies', 'Get-RoleAssignments', 
-               'Get-RoleDefinitions', 'Get-RoleScopeTags', 'IntuneBackup'
+FunctionsToExport = 'Format-HashtableRecursively', 'Get-AppleVPPTokens', 
+               'Get-AppManagementRoleAssignment', 'Get-ConfigurationPolicies', 
+               'Get-DeviceCompliancePolicies', 'Get-DeviceConfigurations', 
+               'Get-DevicePowerShellScripts', 'Get-DeviceShellScripts', 
+               'Get-EndpointSecurityIntents', 'Get-EndpointSecurityTemplates', 
+               'Get-ManagedAppConfigurations', 'Get-ManagedAppProtectionPolicies', 
+               'Get-ManagedDeviceConfigurationPolicies', 'Get-MgGraphAllPages', 
+               'Get-RoleAssignments', 'Get-RoleDefinitions', 'Get-RoleScopeTags', 
+               'IntuneBackup', 'Invoke-RetryRestMethod'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
