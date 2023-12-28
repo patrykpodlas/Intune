@@ -1,18 +1,16 @@
-Function Get-RoleScopeTags {
+Function Get-AppManagementRoleAssignment {
     param
     (
-        [Array]$IDs,
-        $ExportPath = "$env:TEMP\deviceManagement\deviceAndAppManagementRoleAssignment"
+        $ExportPath = "$env:TEMP\deviceManagement\rbac\appManagementRoleAssignments",
+        [Array]$IDs
     )
 
-    # Initialize the array
     $dataArray = @()
 
-    # Process
     foreach ($ID in $IDs) {
         try {
             # Get
-            $URI = "https://graph.microsoft.com/beta/deviceManagement/roleAssignments('$ID')?`$expand=microsoft.graph.deviceAndAppManagementRoleAssignment/roleScopeTags"
+            $URI = "https://graph.microsoft.com/beta/deviceManagement/roleAssignments('$id')?`$expand=microsoft.graph.deviceAndAppManagementRoleAssignment/roleScopeTags"
             $request = (Invoke-MgGraphRequest -Uri $URI -Method GET)
 
             # Sort
@@ -20,16 +18,10 @@ Function Get-RoleScopeTags {
                 Format-HashtableRecursively -Hashtable $item
             }
 
-            # Convert Date and Time to string to prevent serialisation
-            foreach ($item in $sortedRequest) {
-                $item.createdDateTime = $item.createdDateTime.ToString('MM/dd/yyyy HH:mm:ss')
-                $item.lastModifiedDateTime = $item.lastModifiedDateTime.ToString('MM/dd/yyyy HH:mm:ss')
-            }
-
             # Process each
             foreach ($item in $sortedRequest) {
                 Write-Verbose "Item: $($item.description)"
-                $jsonContent = $item | ConvertTo-Json -Depth 20
+                $jsonContent = $item | ConvertTo-Json -Depth 99
                 $fileName = $item.description -replace '[\<\>\:"/\\\|\?\*]', "_"
 
                 # Create a hashtable for each file's data
@@ -46,6 +38,7 @@ Function Get-RoleScopeTags {
 
         catch {
             Write-Error "An error occurred: $($_.Exception.Message)"
+            return
         }
 
     }

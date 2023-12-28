@@ -1,16 +1,16 @@
 Function Get-RoleDefinitions {
     param (
-        $BaseURI = "https://graph.microsoft.com/Beta/deviceManagement/roleDefinitions",
-        $ExportPath = "$env:TEMP\deviceManagement\RoleDefinitions"
+        $URI = "https://graph.microsoft.com/Beta/deviceManagement/roleDefinitions",
+        $ExportPath = "$env:TEMP\deviceManagement\rbac\roleDefinitions"
     )
 
     try {
         # Get
-        $request = (Invoke-MgGraphRequest -Uri $BaseURI -Method GET).Value
+        $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
         foreach ($item in $request) {
             # Get assignments
-            $assignmentsUri = "$BaseURI('$($item.id)')?`$expand=roleAssignments"
+            $assignmentsUri = "$URI('$($item.id)')?`$expand=roleAssignments"
             $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).roleAssignments
             $item.roleAssignments = $itemAssignments
         }

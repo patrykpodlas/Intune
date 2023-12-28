@@ -1,22 +1,15 @@
-Function Get-DeviceCompliancePolicies {
+Function Get-ManagedAppProtectionPolicies {
     [CmdletBinding()]
-    param (
-        $URI = "https://graph.microsoft.com/v1.0/deviceManagement/deviceCompliancePolicies",
-        $ExportPath = "$env:TEMP\deviceManagement\deviceCompliancePolicies"
+    param(
+        $URI = "https://graph.microsoft.com/v1.0/deviceAppManagement/managedAppPolicies",
+        $ExportPath = "$env:TEMP\deviceAppManagement\managedAppPolicies"
     )
 
-    $exportPath = $exportPath.replace('"', '')
+    $exportPath = $exportPath.Replace('"', '')
 
     try {
         # Get
-        $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
-
-        # Get assignments
-        foreach ($item in $request) {
-            $assignmentsUri = "$URI('$($item.id)')/assignments"
-            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
-            $item.assignments = $itemAssignments
-        }
+        $request = (Invoke-MgGraphRequest -Uri $uri -Method GET).Value | Where-Object { ($_.'@odata.type').contains("ManagedAppProtection") -or ($_.'@odata.type').contains("InformationProtectionPolicy") }
 
         # Sort
         $sortedRequest = foreach ($item in $request) {
@@ -45,6 +38,7 @@ Function Get-DeviceCompliancePolicies {
             }
             # Add the object to the array
             $dataArray += $fileData
+            Write-Host
         }
 
         return $dataArray

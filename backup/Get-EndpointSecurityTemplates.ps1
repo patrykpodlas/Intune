@@ -16,7 +16,12 @@ Function Get-EndpointSecurityTemplates {
             Format-HashtableRecursively -Hashtable $item
         }
 
-        # Initialize the array to hold data for export
+        # Convert Date and Time to string to prevent serialisation
+        foreach ($item in $sortedRequest) {
+            $item.publishedDateTime = $item.publishedDateTime.ToString('MM/dd/yyyy HH:mm:ss')
+        }
+
+        # Initialize the array
         $dataArray = @()
 
         # Process
@@ -36,7 +41,8 @@ Function Get-EndpointSecurityTemplates {
 
         return $dataArray
 
-    } catch {
+    }
+    catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }

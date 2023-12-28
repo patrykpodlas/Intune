@@ -1,7 +1,7 @@
 function Get-RoleAssignments {
     param (
-        [Array]$IDs,
-        $ExportPath = "$env:TEMP\deviceManagement\roleAssignments"
+        $ExportPath = "$env:TEMP\deviceManagement\rbac\roleAssignments",
+        [Array]$IDs
     )
 
     # Initialize the array
@@ -14,14 +14,14 @@ function Get-RoleAssignments {
             $request = (Invoke-MgGraphRequest -Uri $URI -Method GET)
 
             # Sort
-            $sortedIRBRAs = foreach ($item in $request) {
+            $sortedRequest = foreach ($item in $request) {
                 Format-HashtableRecursively -Hashtable $item
             }
 
             # Process each
-            foreach ($item in $sortedIRBRAs) {
+            foreach ($item in $sortedRequest) {
                 Write-Verbose "Item: $($item.displayName)"
-                $jsonContent = $item | ConvertTo-Json -Depth 20
+                $jsonContent = $item | ConvertTo-Json -Depth 99
                 $fileName = $item.displayName -replace '[\<\>\:"/\\\|\?\*]', "_"
 
                 # Create a hashtable for each file's data
@@ -34,7 +34,8 @@ function Get-RoleAssignments {
                 # Add the hashtable to the array
                 $dataArray += $fileData
             }
-        } catch {
+        }
+        catch {
             Write-Error "An error occurred: $($_.Exception.Message)"
             return
         }

@@ -1,25 +1,18 @@
-Function Get-DeviceCompliancePolicies {
+Function Get-IntuneManagedAppConfigurationPolicy {
     [CmdletBinding()]
-    param (
-        $URI = "https://graph.microsoft.com/v1.0/deviceManagement/deviceCompliancePolicies",
-        $ExportPath = "$env:TEMP\deviceManagement\deviceCompliancePolicies"
+    param(
+        $URI = "https://graph.microsoft.com/v1.0/deviceAppManagement/targetedManagedAppConfigurations?`$expand=assignments",
+        $ExportPath = "$env:TEMP\deviceAppManagement\targetedManagedAppConfigurations"
     )
 
-    $exportPath = $exportPath.replace('"', '')
+    $exportPath = $exportPath.Replace('"', '')
 
     try {
         # Get
-        $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
-
-        # Get assignments
-        foreach ($item in $request) {
-            $assignmentsUri = "$URI('$($item.id)')/assignments"
-            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
-            $item.assignments = $itemAssignments
-        }
+        $get = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
         # Sort
-        $sortedRequest = foreach ($item in $request) {
+        $sortedGet = foreach ($item in $get) {
             Format-HashtableRecursively -Hashtable $item
         }
 
@@ -33,9 +26,9 @@ Function Get-DeviceCompliancePolicies {
         $dataArray = @()
 
         # Process
-        foreach ($item in $sortedRequest) {
-            Write-Verbose "Item: $($item.displayName)"
-            $jsonContent = $item | ConvertTo-Json -Depth 99
+        foreach ($item in $sortedGet) {
+            Write-Host "Device Compliance Policy:" $item.displayName -ForegroundColor Yellow
+            $jsonContent = $item | ConvertTo-Json -Depth 10
             $fileName = $item.displayName -replace '[\<\>\:"/\\\|\?\*]', "_"
 
             $fileData = @{
@@ -45,12 +38,12 @@ Function Get-DeviceCompliancePolicies {
             }
             # Add the object to the array
             $dataArray += $fileData
+            Write-Host
         }
 
         return $dataArray
 
-    }
-    catch {
+    } catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }

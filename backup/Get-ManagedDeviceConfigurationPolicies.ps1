@@ -1,22 +1,16 @@
-Function Get-DeviceCompliancePolicies {
+Function Get-ManagedDeviceConfigurationPolicies {
     [CmdletBinding()]
-    param (
-        $URI = "https://graph.microsoft.com/v1.0/deviceManagement/deviceCompliancePolicies",
-        $ExportPath = "$env:TEMP\deviceManagement\deviceCompliancePolicies"
+    param(
+        # Must be beta, the v1.0 doesn't provide Android configurations
+        $URI = "https://graph.microsoft.com/beta/deviceAppManagement/mobileAppConfigurations?`$expand=assignments",
+        $ExportPath = "$env:TEMP\deviceAppManagement\mobileAppConfigurations"
     )
 
-    $exportPath = $exportPath.replace('"', '')
+    $exportPath = $exportPath.Replace('"', '')
 
     try {
         # Get
         $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
-
-        # Get assignments
-        foreach ($item in $request) {
-            $assignmentsUri = "$URI('$($item.id)')/assignments"
-            $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET).Value
-            $item.assignments = $itemAssignments
-        }
 
         # Sort
         $sortedRequest = foreach ($item in $request) {
@@ -45,6 +39,7 @@ Function Get-DeviceCompliancePolicies {
             }
             # Add the object to the array
             $dataArray += $fileData
+            Write-Host
         }
 
         return $dataArray

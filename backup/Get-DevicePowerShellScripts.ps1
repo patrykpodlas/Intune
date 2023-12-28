@@ -31,6 +31,12 @@ Function Get-DevicePowerShellScripts {
             Format-HashtableRecursively -Hashtable $item
         }
 
+        # Convert Date and Time to string to prevent serialisation
+        foreach ($item in $sortedRequest) {
+            $item.createdDateTime = $item.createdDateTime.ToString('MM/dd/yyyy HH:mm:ss')
+            $item.lastModifiedDateTime = $item.lastModifiedDateTime.ToString('MM/dd/yyyy HH:mm:ss')
+        }
+
         # Initialize the array
         $dataArray = @()
 
@@ -51,7 +57,8 @@ Function Get-DevicePowerShellScripts {
 
         return $dataArray
 
-    } catch {
+    }
+    catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }
