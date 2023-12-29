@@ -2,7 +2,7 @@ Function Get-RoleScopeTags {
     param
     (
         [Array]$IDs,
-        $ExportPath = "$env:TEMP\deviceManagement\deviceAndAppManagementRoleAssignment"
+        $ExportPath = "$env:TEMP\deviceManagement\rbac\deviceAndAppManagementRoleAssignment"
     )
 
     # Initialize the array
@@ -18,12 +18,6 @@ Function Get-RoleScopeTags {
             # Sort
             $sortedRequest = foreach ($item in $request) {
                 Format-HashtableRecursively -Hashtable $item
-            }
-
-            # Convert Date and Time to string to prevent serialisation
-            foreach ($item in $sortedRequest) {
-                $item.createdDateTime = $item.createdDateTime.ToString('MM/dd/yyyy HH:mm:ss')
-                $item.lastModifiedDateTime = $item.lastModifiedDateTime.ToString('MM/dd/yyyy HH:mm:ss')
             }
 
             # Process each
