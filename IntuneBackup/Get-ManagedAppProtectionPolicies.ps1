@@ -43,8 +43,7 @@ Function Get-ManagedAppProtectionPolicies {
 
         return $dataArray
 
-    }
-    catch {
+    } catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }
