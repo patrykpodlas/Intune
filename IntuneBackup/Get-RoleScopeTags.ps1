@@ -2,7 +2,7 @@ Function Get-RoleScopeTags {
     param
     (
         [Array]$IDs,
-        $ExportPath = "$env:TEMP\deviceManagement\rbac\deviceAndAppManagementRoleAssignment"
+        $ExportPath = "$env:TEMP\deviceManagement\rbac\roleScopeTags"
     )
 
     # Initialize the array
