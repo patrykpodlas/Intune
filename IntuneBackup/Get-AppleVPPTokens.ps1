@@ -1,7 +1,7 @@
 Function Get-AppleVPPTokens {
     [CmdletBinding()]
     param (
-        $URI = "https://graph.microsoft.com/v1.0/deviceAppManagement/vppTokens",
+        $URI = "https://graph.microsoft.com/beta/deviceAppManagement/vppTokens",
         $ExportPath = "$env:TEMP\deviceAppManagement\deviceEnrollment\appleVPPTokens"
     )
 
