@@ -22,9 +22,9 @@ Function Get-RoleScopeTags {
 
             # Process each
             foreach ($item in $sortedRequest) {
-                Write-Verbose "Item: $($item.description)"
+                Write-Verbose "Item: $($item.displayName)"
                 $jsonContent = $item | ConvertTo-Json -Depth 20
-                $fileName = $item.description -replace '[\<\>\:"/\\\|\?\*]', "_"
+                $fileName = $item.displayName -replace '[\<\>\:"/\\\|\?\*]', "_"
 
                 # Create a hashtable for each file's data
                 $fileData = @{
