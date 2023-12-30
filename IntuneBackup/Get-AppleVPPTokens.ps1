@@ -15,6 +15,13 @@ Function Get-AppleVPPTokens {
         $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
         }
+        # Convert Date and Time to string to prevent serialisation
+        foreach ($item in $sortedRequest) {
+            $item.expirationDateTime = $item.expirationDateTime.ToString('MM/dd/yyyy HH:mm:ss')
+            $item.lastModifiedDateTime = $item.lastModifiedDateTime.ToString('MM/dd/yyyy HH:mm:ss')
+            # Exclude lastSyncDateTime
+            $item.lastSyncDateTime = $null
+        }
 
         # Initialize the array
         $dataArray = @()
