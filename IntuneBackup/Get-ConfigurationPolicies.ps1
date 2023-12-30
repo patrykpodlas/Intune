@@ -18,7 +18,6 @@ Function Get-ConfigurationPolicies {
         foreach ($item in $request) {
             $assignmentsUri = "$URI('$($item.id)')/assignments"
             $itemAssignments = (Invoke-MgGraphRequest -Uri $assignmentsUri -Method GET)
-
             $item.assignments = $itemAssignments
         }
 
