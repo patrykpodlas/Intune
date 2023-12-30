@@ -215,7 +215,7 @@ function Get-PolicyGroupAssignments {
             foreach ($item in $groups) {
                 $groupID = $($item.groupID)
                 $groupTargetType = $($item."@odata.type")
-                $groupDisplayName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$groupID" -Method GET | Select-Object -ExpandProperty displayName
+                $groupDisplayName = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/groups/$groupID" -Method GET).displayName
 
                 $object = [PSCustomObject]@{
                     groupID          = $groupID
