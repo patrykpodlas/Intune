@@ -1,4 +1,4 @@
-$functions = Get-ChildItem -Path ".\" -Filter '*.ps1' -Recurse
+$functions = Get-ChildItem -File -Recurse -LiteralPath $PSScriptRoot -Filter *.ps1
 
 foreach ($item in $functions) {
     try {
