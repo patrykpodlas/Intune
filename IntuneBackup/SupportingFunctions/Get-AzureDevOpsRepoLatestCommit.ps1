@@ -38,7 +38,7 @@ function Get-AzureDevOpsRepoLatestCommit {
         }
     }
 
-    $uri = "https://dev.azure.com/claranet/ge-infrastructure/_apis/git/repositories/$RepositoryId/refs?filter=heads/main&api-version=7.1"
+    $uri = "https://dev.azure.com/<org>/<project>/_apis/git/repositories/$RepositoryId/refs?filter=heads/main&api-version=7.1"
 
     $response = Invoke-RetryRestMethod -Uri $uri -Headers $headers -Method 'GET'
 
