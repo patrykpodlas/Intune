@@ -9,10 +9,10 @@ Function Get-ManagedAppConfigurationPolicies {
 
     try {
         # Get
-        $get = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
+        $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
         # Sort
-        $sortedGet = foreach ($item in $get) {
+        $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
         }
 
@@ -26,9 +26,9 @@ Function Get-ManagedAppConfigurationPolicies {
         $dataArray = @()
 
         # Process
-        foreach ($item in $sortedGet) {
-            Write-Host "Device Compliance Policy:" $item.displayName -ForegroundColor Yellow
-            $jsonContent = $item | ConvertTo-Json -Depth 10
+        foreach ($item in $sortedRequest) {
+            Write-Host "Item:" $item.displayName -ForegroundColor Yellow
+            $jsonContent = $item | ConvertTo-Json -Depth 99
             $fileName = $item.displayName -replace '[\<\>\:"/\\\|\?\*]', "_"
 
             $fileData = @{
