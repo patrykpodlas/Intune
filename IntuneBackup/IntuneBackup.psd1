@@ -84,7 +84,7 @@
         'Get-DeviceShellScripts',
         'Get-EndpointSecurityIntents',
         'Get-EndpointSecurityTemplates',
-        'Get-ManagedAppConfigurations',
+        'Get-Get-ManagedAppConfigurationPolicies',
         'Get-ManagedAppProtectionPolicies',
         'Get-ManagedDeviceConfigurationPolicies',
         'Get-RoleAssignments',
