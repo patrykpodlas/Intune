@@ -15,19 +15,19 @@
     Requires Az.Accounts -Version 2.12.1
 #>
 
-#Requires -Module Az.Accounts -Version 2.12.1
-
 function Get-AzureDevOpsAccessToken {
     [CmdletBinding()]
     param (
         [switch]$AsManagedIdentity,
         [switch]$ConstructHeaders
     )
-    try {
-        Import-Module Az.Accounts -RequiredVersion 2.12.1 -ErrorAction Stop
-    } catch {
-        Write-Error "The required version of Az.Accounts is not installed."
-        return
+    if (Get-Module Az.Accounts -ListAvailable | Where-Object Version -eq "2.12.1") {
+        try {
+            Import-Module Az.Accounts -RequiredVersion 2.12.1 -ErrorAction Stop
+        } catch {
+            Write-Error "The required version of Az.Accounts (2.12.1) is not installed."
+            return
+        }
     }
 
     if ($AsManagedIdentity) {

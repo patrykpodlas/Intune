@@ -87,30 +87,14 @@
         'Get-RoleAssignments',
         'Get-RoleDefinitions',
         'Get-RoleScopeTags',
-        'Invoke-RetryRestMethod'
+        'Invoke-RetryRestMethod',
+        'Get-AzureDevOpsAccessToken',
+        'Get-AzureDevOpsRepoFiles',
+        'Get-AzureDevOpsRepoLatestCommit'
     )
 
     # Cmdlets to export from this module, use an empty array if there are no cmdlets to export.
-    CmdletsToExport   = @(
-        'Format-HashtableRecursively',
-        'Get-AppleVPPTokens',
-        'Get-ConfigurationPolicies',
-        'Get-DeviceCompliancePolicies',
-        'Get-DeviceConfigurations',
-        'Get-DevicePowerShellScripts',
-        'Get-DeviceShellScripts',
-        'Get-EndpointSecurityIntents',
-        'Get-EndpointSecurityTemplates',
-        'Get-ManagedAppConfigurations',
-        'Get-ManagedAppProtectionPolicies',
-        'Get-ManagedDeviceConfigurationPolicies',
-        'Get-MgGraphAllPages',
-        'Get-RoleAssignments',
-        'Get-RoleDefinitions',
-        'Get-RoleScopeTags',
-        'Invoke-RetryRestMethod'
-    )
-
+    CmdletsToExport   = @()
 
     # Variables to export from this module
     # VariablesToExport = @()
