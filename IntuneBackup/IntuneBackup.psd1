@@ -76,6 +76,7 @@
         'Get-AzureDevOpsRepoLatestCommit'
         'Format-HashtableRecursively',
         'Get-AppleVPPTokens',
+        'Get-DEPOnboardingSettings'
         'Get-AppManagementRoleAssignment',
         'Get-ConfigurationPolicies',
         'Get-DeviceCompliancePolicies',
