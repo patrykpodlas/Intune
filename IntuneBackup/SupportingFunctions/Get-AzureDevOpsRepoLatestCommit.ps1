@@ -8,6 +8,8 @@
 .EXAMPLE
     PS C:\> $latestCommitId = Get-AzureDevOpsRepoLatestCommit -BearerToken $bearerToken -RepositoryId "<RepositoryId>"
     Get the latest commit ID from a Git repository (AzureDevOps in this case), uses a bearer token captured using Get-AzureDevOpsAccessToken.
+
+    Change the ORG and PROJECT to your own
 .NOTES
     Author: Patryk Podlas
     Created: 31/12/2023
@@ -38,7 +40,7 @@ function Get-AzureDevOpsRepoLatestCommit {
         }
     }
 
-    $uri = "https://dev.azure.com/claranet/ge-infrastructure/_apis/git/repositories/$RepositoryId/refs?filter=heads/main&api-version=7.1"
+    $uri = "https://dev.azure.com/<org>/<project>/_apis/git/repositories/$RepositoryId/refs?filter=heads/main&api-version=7.1"
 
     $response = Invoke-RetryRestMethod -Uri $uri -Headers $headers -Method 'GET'
 
