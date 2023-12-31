@@ -1,4 +1,4 @@
-Function Get-ManagedAppConfigurationsPolicies {
+Function Get-ManagedAppConfigurationPolicies {
     [CmdletBinding()]
     param(
         $URI = "https://graph.microsoft.com/v1.0/deviceAppManagement/targetedManagedAppConfigurations?`$expand=assignments",
