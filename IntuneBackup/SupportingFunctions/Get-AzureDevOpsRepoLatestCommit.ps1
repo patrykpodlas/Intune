@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Short description
+    Get the latest commit ID of a repository.
 .DESCRIPTION
     Detailed description
 .PARAMETER <name>
