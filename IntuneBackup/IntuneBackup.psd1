@@ -12,7 +12,7 @@
     RootModule        = '.\IntuneBackup.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0'
+    ModuleVersion     = '1.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -70,6 +70,10 @@
 
     # Functions to export from this module, use an empty array if there are no functions to export.
     FunctionsToExport = @(
+        'Get-MgGraphAllPages',
+        'Get-AzureDevOpsAccessToken',
+        'Get-AzureDevOpsRepoFiles',
+        'Get-AzureDevOpsRepoLatestCommit'
         'Format-HashtableRecursively',
         'Get-AppleVPPTokens',
         'Get-AppManagementRoleAssignment',
@@ -83,14 +87,10 @@
         'Get-ManagedAppConfigurations',
         'Get-ManagedAppProtectionPolicies',
         'Get-ManagedDeviceConfigurationPolicies',
-        'Get-MgGraphAllPages',
         'Get-RoleAssignments',
         'Get-RoleDefinitions',
         'Get-RoleScopeTags',
-        'Invoke-RetryRestMethod',
-        'Get-AzureDevOpsAccessToken',
-        'Get-AzureDevOpsRepoFiles',
-        'Get-AzureDevOpsRepoLatestCommit'
+        'Invoke-RetryRestMethod'
     )
 
     # Cmdlets to export from this module, use an empty array if there are no cmdlets to export.
