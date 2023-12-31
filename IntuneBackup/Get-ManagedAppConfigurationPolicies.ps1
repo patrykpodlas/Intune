@@ -1,4 +1,4 @@
-Function Get-IntuneManagedAppConfigurationPolicy {
+Function Get-ManagedAppConfigurationsPolicies {
     [CmdletBinding()]
     param(
         $URI = "https://graph.microsoft.com/v1.0/deviceAppManagement/targetedManagedAppConfigurations?`$expand=assignments",
