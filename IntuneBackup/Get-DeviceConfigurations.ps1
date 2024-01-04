@@ -18,6 +18,12 @@ Function Get-DeviceConfigurations {
             $item.assignments = $itemAssignments
         }
 
+        # Get payload content
+        foreach ($item in $request) {
+            $payload = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("$($item.payload)"))
+            $item.payload = $payload
+        }
+
         # Sort
         $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
@@ -49,8 +55,7 @@ Function Get-DeviceConfigurations {
 
         return $dataArray
 
-    }
-    catch {
+    } catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }
