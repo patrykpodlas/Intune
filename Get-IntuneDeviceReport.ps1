@@ -263,7 +263,7 @@ function Get-IntuneDeviceReport {
         # Get device configuration state
         # For whatever reason, this API return ALL the devices that belong to the user, not just the device targeted, but you can filter through when running the command function.
         # https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-deviceconfigurationsettingstate?view=graph-rest-beta
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates" -Method GET | Select-Object -ExpandProperty Value
+        $response = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceConfigurationStates" -Method GET).Value
         $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
@@ -280,7 +280,7 @@ function Get-IntuneDeviceReport {
         # Get device compliance policy state
         # For whatever reason, this API return ALL the devices that belong to the user, not just the device targeted, but you can filter through when running the command function.
         # https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-devicecompliancepolicysettingstate?view=graph-rest-beta
-        $response = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates" -Method GET | Select-Object -ExpandProperty Value
+        $response = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$deviceId/deviceCompliancePolicyStates" -Method GET).Value
         $objects = foreach ($item in $response | Where-Object { $_.userPrincipalName -ne "System account" -and $_.userPrincipalName -notlike "*autopilot*" }) {
             # Convert each hashtable entry into a PSCustomObject
             [PSCustomObject]$item
@@ -330,7 +330,7 @@ function Get-IntuneDeviceReport {
     }
 
     if ($SecurityIntents) {
-        $intents = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/intents?`$select=id,displayName" | Select-Object -ExpandProperty Value
+        $intents = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/intents?`$select=id,displayName").Value
 
         $allResponses = @()
         foreach ($item in $intents) {
@@ -464,11 +464,21 @@ function Get-IntuneDeviceGroupMemberships {
     )
     # This is the Intune Device ID, but we can't use it because we need the Object ID of the device, which we can't get because none of the Intune API's get the ID.
     # Get the device displayName from the Intune Device ID
-    $deviceName = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$($deviceId)?`$select=deviceName" | Select-Object -ExpandProperty deviceName
+    $deviceName = (Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/beta/deviceManagement/managedDevices/$($deviceId)?`$select=deviceName").deviceName
     # Get the Intune ObjectID from the device displayName
-    $azureADdeviceID = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$($deviceName)'" | Select-Object -ExpandProperty Value | Select-Object -ExpandProperty Id
+    $azureADdeviceID = ((Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$($deviceName)'").Value).Id
     # Requires ObjectID (this is the Azure AD ID)
-    $request = Invoke-MgGraphRequest -URI "https://graph.microsoft.com/v1.0/devices/$azureADdeviceID/memberOf" | Select-Object -ExpandProperty Value | Select-Object id, displayName
-    # The reutned request contains all the groups the device is a member of.
-    return $request
+    $request = (Invoke-MgGraphRequest -URI "https://graph.microsoft.com/v1.0/devices/$azureADdeviceID/memberOf").Value
+
+    $object = @()
+    foreach ($item in $request) {
+        $customObject = [PSCustomObject]@{
+            Id          = $item.Id
+            DisplayName = $item.DisplayName
+        }
+        $object += $customObject
+    }
+
+    return $object
+
 }
