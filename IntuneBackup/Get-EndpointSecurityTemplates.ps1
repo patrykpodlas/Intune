@@ -11,6 +11,13 @@ Function Get-EndpointSecurityTemplates {
         # Get
         $request = (Invoke-MgGraphRequest -Uri $URI -Method GET).Value
 
+        # Get settings
+        foreach ($item in $request) {
+            $URI = "https://graph.microsoft.com/beta/deviceManagement/templates/$($item.id)?`$expand=settings"
+            $itemSettings = Invoke-MgGraphRequest -Uri $URI -Method GET
+            $item.settings = $itemSettings.settings
+        }
+
         # Sort
         $sortedRequest = foreach ($item in $request) {
             Format-HashtableRecursively -Hashtable $item
@@ -41,8 +48,7 @@ Function Get-EndpointSecurityTemplates {
 
         return $dataArray
 
-    }
-    catch {
+    } catch {
         Write-Error "An error occurred: $($_.Exception.Message)"
         return
     }
